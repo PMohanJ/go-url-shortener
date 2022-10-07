@@ -16,5 +16,12 @@ func CreateClient(dbNo int) *redis.Client {
 		DB:       dbNo,
 	})
 
+	/* ping, err := rdb.Ping(Ctx).Result()
+	if err != nil {
+		fmt.Println("Cr db err ", err)
+	} else {
+		fmt.Println("db created succfully ", ping)
+	} */
+
 	return rdb
 }
