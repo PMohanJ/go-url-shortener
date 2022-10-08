@@ -13,6 +13,7 @@ import (
 	"github.com/pmohanj/url-shorten-fiber-redis/helpers"
 )
 
+// Defining custome request and respone types
 type request struct {
 	URL         string        `json:"url"`
 	CustomShort string        `json:"short"`
@@ -36,6 +37,8 @@ func ShortenURL(c *fiber.Ctx) error {
 		})
 	}
 
+	// DB instance 1 for to store the detail of user, like ip,
+	// quota, expiry time of his usage
 	r2 := database.CreateClient(1)
 	defer r2.Close()
 
@@ -54,15 +57,15 @@ func ShortenURL(c *fiber.Ctx) error {
 		}
 	}
 
-	// Check if provided url is an actula url
+	// Check if provided url is an actual url
 	if !govalidator.IsURL(body.URL) {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Provided URL is not valid",
 		})
 	}
 
-	// Check for domain error
-	if !helpers.RemoveDomainError(body.URL) {
+	// Check for domain errors
+	if !helpers.CheckForDomainError(body.URL) {
 		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
 			"error": "You can't hack the system :]",
 		})
@@ -78,6 +81,8 @@ func ShortenURL(c *fiber.Ctx) error {
 		id = body.CustomShort
 	}
 
+	// DB 0 instance to store the shorten url mapped to actual url
+	// Here shorten url is unique id, so can be used as key
 	r := database.CreateClient(0)
 	defer r.Close()
 
@@ -88,6 +93,7 @@ func ShortenURL(c *fiber.Ctx) error {
 		})
 	}
 
+	// Default epiry time of url, 24hrs
 	if body.Expiry == 0 {
 		body.Expiry = 24
 	}
@@ -108,6 +114,7 @@ func ShortenURL(c *fiber.Ctx) error {
 		XRateLimitReset: 30,
 	}
 
+	// Decrement the quota limit
 	r2.Decr(database.Ctx, c.IP())
 
 	val, _ = r2.Get(database.Ctx, c.IP()).Result()
@@ -116,7 +123,7 @@ func ShortenURL(c *fiber.Ctx) error {
 	ttl, _ := r2.TTL(database.Ctx, c.IP()).Result()
 	resp.XRateLimitReset = ttl / time.Nanosecond / time.Minute
 
-	resp.CustomShort = os.Getenv("DOMAIN") + "/" + id
+	resp.CustomShort = os.Getenv("OUR_DOMAIN_NAME") + "/" + id
 
 	return c.Status(fiber.StatusOK).JSON(resp)
 }

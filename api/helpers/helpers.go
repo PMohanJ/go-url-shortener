@@ -7,12 +7,12 @@ import (
 
 func EnforceHTTP(url string) string {
 	if url[:4] != "http" {
-		return "http" + url
+		return "http://" + url
 	}
 	return url
 }
 
-func RemoveDomainError(url string) bool {
+func CheckForDomainError(url string) bool {
 
 	if url == os.Getenv("DOMAIN") {
 		return false
