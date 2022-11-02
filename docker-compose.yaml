@@ -7,6 +7,8 @@ services:
       - "3000:3000"
     depends_on:
       - db 
+    networks:
+      - redis_network
 
   db:
     build: db
@@ -14,3 +16,9 @@ services:
       - "6379:6379"
     volumes:
       - .data:/data
+    networks:
+      - redis_network
+
+networks:
+  redis_network:
+    driver: bridge
